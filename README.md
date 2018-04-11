@@ -6,18 +6,9 @@ Status](http://travis-ci.org/ropensci/gtfsr.svg?branch=master)](http://travis-ci
 
 ## Description
 
-`gtfsr` is an R package for easily importing, validating, and mapping
-transit data that follows the [General Transit Feed Specification
-(GTFS)](https://developers.google.com/transit/gtfs/) format.
+This is MTC's fork of the gtfsr package. Here we maintain functions to do things for MTC business that are probably not directly relevant to the gtfsr project.
 
-The `gtfsr` package provides functions for converting files following
-the GTFS format into a single `gtfs` data objects. A `gtfs` object can
-then be validated for proper data formatting (i.e. if the source data is
-properly structured and formatted as a GTFS feed) or have any spatial
-data for stops and routes mapped using `leaflet`. The `gtfsr` package
-also provides API wrappers for the popular public GTFS feed sharing site
-[TransitFeeds](https://transitfeeds.com/), allowing users quick, easy
-access to hundreds of GTFS feeds from within R.
+There are multiple uses of the general functions of the gtfsr package for MTC work. See [here](https://bayareametro.github.io/Data-And-Visualization-Projects/sb827/sb827_amendment_example.html) for a how to and walk through of some of the more basic functions. 
 
 ## Installation
 
@@ -26,7 +17,7 @@ You can install this package from GitHub using the devtools package:
     if (!require(devtools)) {
         install.packages('devtools')
     }
-    devtools::install_github('ropensci/gtfsr')
+    devtools::install_github('BayAreaMetro/gtfsr')
 
 If you have already installed `gtfsr`, you can get the latest version by
 running
@@ -36,71 +27,67 @@ running
 
 If you’d like to build the accompanying vignette, then run
 
-    devtools::install_github('ropensci/gtfsr', build_vignettes = TRUE)
+    devtools::install_github('BayAreaMetro/gtfsr', build_vignettes = TRUE)
 
 ## Example Usage
 
+Calculate headways for one provider based on MTC/State of California "stop/route headway" standard. 
+
 ``` r
 library(gtfsr)
-library(magrittr)
+library(sf)
+library(mapview)
 library(dplyr)
 
-# set the API key
-# set_api_key() # uncomment to set api key
+setwd("~/Documents/Projects/mtc/Data-And-Visualization-Projects/sb827")
 
-# get the feedlist dataframe and filter out NYC subway
-feedlist_df <- get_feedlist() %>%
-  filter(grepl('NYC Subway GTFS', t, ignore.case= TRUE))
+major_stops_url <- "https://opendata.arcgis.com/datasets/561dc5b42fa9451b95faf615a3054260_0.geojson"
+major_stops_sf <- st_read(major_stops_url)
 
-# import NYC gtfs feed by sending the url to `import_gtfs`
-NYC <- import_gtfs(feedlist_df$url_d)
-#> [1] "agency.txt"         "calendar_dates.txt" "calendar.txt"      
-#> [4] "routes.txt"         "shapes.txt"         "stop_times.txt"    
-#> [7] "stops.txt"          "transfers.txt"      "trips.txt"
+major_stops_df <- major_stops_sf[,c('agency_id','route_id')]
+st_geometry(major_stops_df) <- NULL
 
-# get line (routes) A and B
-routes <- NYC[['routes_df']] %>%
-  slice(which(grepl('a|b', route_id, ignore.case=TRUE))) %>%
-  '$'('route_id')
+library(readr)
 
-# take the NYC `gtfs` object and map routes. includes stops by default.
-NYC %>% map_gtfs(route_ids = routes)
+#read 511 orgs list
+o511 <- read_csv("https://gist.githubusercontent.com/tibbl35/d49fa2c220733b0072fc7c59e0ac412b/raw/cff45d8c8dd2ea951b83c0be729abe72f35b13f7/511_orgs.csv")
+
+#filter for just those agencies that have high frequency stops (these are unlikely to have gtfs data that will fail in processing)
+agency_ids <- filter(o511, PrivateCode %in% major_stops_df$agency_id) %>% select(PrivateCode)
+agency_ids <- agency_ids[[1]]
+
+#Sys.setenv(APIKEY511 = "")
+api_key = Sys.getenv("APIKEY511")
+
+agency_id1 <- agency_ids[[1]] 
+zip_request_url = paste0('https://api.511.org/transit/datafeeds?api_key=',
+                         api_key,
+                         '&operator_id=',
+                         agency_id1)
+
+g1 <- zip_request_url %>% import_gtfs
+
+help(save)
+
+#cache the data
+save(g1, file=paste0(agency_id1,"_gtfsr.rda"))
+
+df_sr <- join_all_gtfs_tables(g1)
+df_sr <- make_arrival_hour_less_than_24(df_sr)
+
+am_stops <- flag_and_filter_peak_periods_by_time(df_sr,"AM")
+am_stops <- remove_duplicate_stops(am_stops) #todo: see https://github.com/MetropolitanTransportationCommission/RegionalTransitDatabase/issues/31
+am_stops <- count_trips(am_stops) 
+
+pm_stops <- flag_and_filter_peak_periods_by_time(df_sr,"PM")
+pm_stops <- remove_duplicate_stops(pm_stops) #todo: see https://github.com/MetropolitanTransportationCommission/RegionalTransitDatabase/issues/31
+pm_stops <- count_trips(pm_stops)
+
+write_csv(pm_stops,"pm_stops.csv")
+write_csv(pm_stops,"am_stops.csv")
+
+df_sf <- stops_df_as_sf(g1$stops_df)
+
+st_write(df_sf,"stops_df.shp")
 ```
 
-<img src="README/README-readme-body-1.png" width="100%" />
-
-``` r
-
-# gtfs will plot ALL shapes for a given route_ids. These can be reduced using the `service_ids` option.
-ids <- NYC$trips_df %>%
-  select(route_id, service_id, shape_id) %>%
-  distinct() %>%
-  filter(route_id %in% routes)
-ids %>% head(5) # see all unique combos of ids
-#> # A tibble: 5 x 3
-#>   route_id service_id   shape_id
-#>   <chr>    <chr>        <chr>   
-#> 1 A        B20171105WKD A..N43R 
-#> 2 A        B20171105WKD A..S43R 
-#> 3 A        B20171105WKD A..N85R 
-#> 4 A        B20171105WKD A..N54R 
-#> 5 A        B20171105WKD A..N65R
-
-# lets map just the the first row
-route_ids <- ids$route_id[1]
-service_ids <- ids$service_id[1]
-shape_ids <- ids$shape_id[1]
-
-# lets map the specific data with some other options enabled.
-NYC %>%
-  map_gtfs(route_ids = route_ids,
-    service_ids = service_ids,
-    shape_ids = shape_ids,
-    route_colors = 'green', # set the route color
-    stop_details = TRUE, # get more stop details on click
-    route_opacity = .5) # change the route opacity
-```
-
-<img src="README/README-readme-body-2.png" width="100%" />
-
-[![ropensci\_footer](http://ropensci.org/public_images/github_footer.png)](http://ropensci.org)
