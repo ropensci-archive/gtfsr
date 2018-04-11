@@ -70,11 +70,11 @@ df_sr <- join_all_gtfs_tables(g1)
 df_sr <- make_arrival_hour_less_than_24(df_sr)
 
 am_stops <- flag_and_filter_peak_periods_by_time(df_sr,"AM")
-am_stops <- remove_duplicate_stops(am_stops) #todo: see https://github.com/MetropolitanTransportationCommission/RegionalTransitDatabase/issues/31
+am_stops <- remove_duplicate_stops(am_stops) #todo: see https://github.com/BayAreaMetro/RegionalTransitDatabase/issues/31
 am_stops <- count_trips(am_stops) 
 
 pm_stops <- flag_and_filter_peak_periods_by_time(df_sr,"PM")
-pm_stops <- remove_duplicate_stops(pm_stops) #todo: see https://github.com/MetropolitanTransportationCommission/RegionalTransitDatabase/issues/31
+pm_stops <- remove_duplicate_stops(pm_stops) #todo: see https://github.com/BayAreaMetro/RegionalTransitDatabase/issues/31 
 pm_stops <- count_trips(pm_stops)
 
 write_csv(pm_stops,"pm_stops.csv")
