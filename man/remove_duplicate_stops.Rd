@@ -2,25 +2,16 @@
 % Please edit documentation in R/mtc_frequencies.R
 \name{remove_duplicate_stops}
 \alias{remove_duplicate_stops}
-\alias{remove_duplicate_stops}
 \title{for a mega-GTFSr dataframe, remove rows with duplicate stop times}
 \usage{
-remove_duplicate_stops(rt_df)
-
 remove_duplicate_stops(rt_df)
 }
 \arguments{
 \item{a}{dataframe of stops with a stop_times column}
-
-\item{a}{dataframe of stops with a stop_times column}
 }
 \value{
 a dataframe of stops with a stop_times column in which there are no duplicate stop times for a given stop
-
-a dataframe of stops with a stop_times column in which there are no duplicate stop times for a given stop
 }
 \description{
-for a mega-GTFSr dataframe, remove rows with duplicate stop times
-
 for a mega-GTFSr dataframe, remove rows with duplicate stop times
 }

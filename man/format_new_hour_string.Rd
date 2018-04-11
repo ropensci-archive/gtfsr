@@ -2,29 +2,18 @@
 % Please edit documentation in R/mtc_frequencies.R
 \name{format_new_hour_string}
 \alias{format_new_hour_string}
-\alias{format_new_hour_string}
 \title{Format a time string in the expected format}
 \usage{
-format_new_hour_string(x, hour_replacement)
-
 format_new_hour_string(x, hour_replacement)
 }
 \arguments{
 \item{x}{a GTFS hour string with an hour greater than 24}
 
 \item{hour_replacement}{the hour to replace the >24 value with}
-
-\item{x}{a GTFS hour string with an hour greater than 24}
-
-\item{hour_replacement}{the hour to replace the >24 value with}
 }
 \value{
 a string formatted hh:mm:ss
-
-a string formatted hh:mm:ss
 }
 \description{
-Format a time string in the expected format
-
 Format a time string in the expected format
 }

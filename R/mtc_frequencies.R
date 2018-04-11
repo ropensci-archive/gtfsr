@@ -81,46 +81,30 @@ fix_hour <- function(x) {
 ##Custom Bus Frequency Functions
 ######
 
-#' Filter a mega-GTFSr dataframe to rows/stops that occur on all weekdays, are buses, and
-#' have a stop_time between 2 time periods
-#' @param a mega-GTFSr dataframe made with the join_all_gtfs_tables() function
-#' @param period - "AM" or "PM"
-#' @export
-#' @return a mega-GTFSr dataframe filtered to TPA peak periods and flagged as AM or PM peak
-flag_and_filter_peak_periods_by_time <- function(mega_df, 
-                                                 period_name="AM_Peak", 
-                                                 time_start="06:00:00", 
-                                                 time_end="09:59:00") {
-  mega_df <- filter_weekday_by_time(mega_df,
-                                    time_start,
-                                    time_end)
-  
-  if (!(is.data.frame(mega_df) && nrow(mega_df)==0)){
-    mega_df["Peak_Period"] <-period_name
-  }
-  return(mega_df)
-}
-
-#' Filter a mega-GTFSr dataframe to rows/stops that occur on all weekdays, are buses, and
-#' have a stop_time between 2 time periods
+#' Get trips and headways based on the number of trips a set of buses on a route take in a specified time frame
 #' @param a dataframe made by joining all the GTFS tables together
 #' @param a start time filter hh:mm:ss
 #' @param an end time filter hh:mm:ss
 #' @export
 #' @return a mega-GTFSr dataframe filtered to rows of interest
-filter_by_time <- function(rt_df, start_filter,end_filter) {
+headways_by_trip <- function(rt_df, 
+                                   period_name="AM_Peak", 
+                                   time_start="06:00:00", 
+                                   time_end="09:59:00") {
   time_start <- paste(c(format(Sys.Date(), "%Y-%m-%d"),
-                        start_filter),collapse=" ")
+                        time_start),collapse=" ")
   time_end <- paste(c(format(Sys.Date(), "%Y-%m-%d"),
-                      end_filter),collapse=" ")
+                      time_end),collapse=" ")
   rt_df_out <- subset(rt_df, rt_df$monday == 1
                       & rt_df$tuesday == 1
                       & rt_df$wednesday == 1
                       & rt_df$thursday == 1
                       & rt_df$friday == 1
                       & rt_df$route_type == 3
-                      & rt_df$arrival_time >time_start
+                      & rt_df$arrival_time > time_start
                       & rt_df$arrival_time < time_end)
+  rt_df_out <- remove_duplicate_stops(rt_df_out) #todo: see https://github.com/BayAreaMetro/RegionalTransitDatabase/issues/31
+  rt_df_out <- count_trips(rt_df_out)
   return(rt_df_out)
 }
 
@@ -131,7 +115,7 @@ filter_by_time <- function(rt_df, start_filter,end_filter) {
 remove_duplicate_stops <- function(rt_df){
   rt_df %>%
     distinct(agency_id, route_id, direction_id,
-             trip_headsign, stop_id, stop_sequence, arrival_time, Peak_Period) %>%
+             trip_headsign, stop_id, stop_sequence, arrival_time) %>%
     arrange(agency_id, route_id, direction_id,
             arrival_time,stop_sequence)->rt_df_out
   return(rt_df_out)
@@ -147,8 +131,7 @@ count_trips<- function(rt_df) {
              route_id,
              direction_id,
              trip_headsign,
-             stop_id,
-             Peak_Period) %>%
+             stop_id) %>%
     count(stop_sequence) %>%
     mutate(Headways = round(240/n,0))
   colnames(rt_df_out)[colnames(rt_df_out)=="n"] <- "Trips"
