@@ -87,26 +87,16 @@ fix_hour <- function(x) {
 #' @param period - "AM" or "PM"
 #' @export
 #' @return a mega-GTFSr dataframe filtered to TPA peak periods and flagged as AM or PM peak
-flag_and_filter_peak_periods_by_time <- function(mega_df, period) {
-  if (period=="AM"){
-    time_start <- "06:00:00"
-    time_end <- "09:59:00"
-  } else {
-    time_start <- "15:00:00"
-    time_end <- "18:59:00"
-  }
+flag_and_filter_peak_periods_by_time <- function(mega_df, 
+                                                 period_name="AM_Peak", 
+                                                 time_start="06:00:00", 
+                                                 time_end="09:59:00") {
+  mega_df <- filter_weekday_by_time(mega_df,
+                                    time_start,
+                                    time_end)
   
-  mega_df <- filter_by_time(mega_df,
-                            time_start,
-                            time_end)
-  
-  if (!(is.data.frame(mega_df) && nrow(mega_df)==0) && period=="AM"){
-    mega_df["Peak_Period"] <-"AM Peak"
-  } else if (!(is.data.frame(mega_df) && nrow(mega_df)==0) && period=="PM" ) {
-    mega_df["Peak_Period"] <-"PM Peak" 
-  } else
-  {
-    mega_df$Peak_Period <-  mega_df$route_id
+  if (!(is.data.frame(mega_df) && nrow(mega_df)==0)){
+    mega_df["Peak_Period"] <-period_name
   }
   return(mega_df)
 }
@@ -220,7 +210,6 @@ join_high_frequency_routes_to_stops <- function(am_stops,pm_stops,am_routes,pm_r
   return(df7)
 }
 
-
 #' 
 #' @param a mega-GTFSr dataframe 
 #' @param a mega-GTFSr get_routes reduced dataframe
@@ -290,7 +279,7 @@ join_all_gtfs_tables <- function(g) {
 #' @param an end time filter hh:mm:ss
 #' @export
 #' @return a mega-GTFSr dataframe filtered to rows of interest
-filter_by_time <- function(rt_df, start_filter,end_filter) {
+filter_weekday_by_time <- function(rt_df, start_filter, end_filter) {
   time_start <- paste(c(format(Sys.Date(), "%Y-%m-%d"),
                         start_filter),collapse=" ")
   time_end <- paste(c(format(Sys.Date(), "%Y-%m-%d"),
@@ -509,7 +498,6 @@ both_directions_bool_check <- function(direction_ids){
   1 %in% direction_ids & 0 %in% direction_ids
 }
 
-
 ##################
 #geospatial work
 ###############
@@ -549,7 +537,6 @@ get_geoms <- function(route_id,gtfs_obj,weekday=TRUE,buffer=402.336) {
   error = function(e) {NULL})
   return(out)
 }
-
 
 #' Return the geometries for a route as single line
 #' @param a list with route_id and direction id

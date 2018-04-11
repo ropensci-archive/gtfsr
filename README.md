@@ -30,7 +30,6 @@ Calculate headways for one provider based on MTC/State of California "stop/route
 ``` r
 library(gtfsr)
 library(sf)
-library(mapview)
 library(dplyr)
 
 setwd("~/Documents/Projects/mtc/Data-And-Visualization-Projects/sb827")
@@ -69,11 +68,17 @@ save(g1, file=paste0(agency_id1,"_gtfsr.rda"))
 df_sr <- join_all_gtfs_tables(g1)
 df_sr <- make_arrival_hour_less_than_24(df_sr)
 
-am_stops <- flag_and_filter_peak_periods_by_time(df_sr,"AM")
+am_stops <- flag_and_filter_peak_periods_by_time(df_sr,
+                                                 period_name="AM_Peak", 
+                                                 time_start="06:00:00", 
+                                                 time_end="09:59:00")
 am_stops <- remove_duplicate_stops(am_stops) #todo: see https://github.com/BayAreaMetro/RegionalTransitDatabase/issues/31
 am_stops <- count_trips(am_stops) 
 
-pm_stops <- flag_and_filter_peak_periods_by_time(df_sr,"PM")
+pm_stops <- flag_and_filter_peak_periods_by_time(df_sr,
+                                                 period_name="PM_Peak", 
+                                                 time_start="15:00:00", 
+                                                 time_end="18:59:00")
 pm_stops <- remove_duplicate_stops(pm_stops) #todo: see https://github.com/BayAreaMetro/RegionalTransitDatabase/issues/31 
 pm_stops <- count_trips(pm_stops)
 
