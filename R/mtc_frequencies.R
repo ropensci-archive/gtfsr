@@ -165,28 +165,6 @@ count_trips<- function(rt_df) {
   return(rt_df_out)
 }
 
-#' for a mega-GTFSr dataframe, reduce it to just a listing of routes
-#' @param a mega-GTFSr dataframe
-#' @export
-#' @return a dataframe of routes  
-get_routes <- function(rt_df) {
-  group_by(rt_df,
-           agency_id,
-           route_id,
-           direction_id,
-           trip_headsign,
-           Peak_Period) %>%
-    mutate(Total_Trips = round(mean(Trips),0),
-           Headway = round(mean(Headways),0)) %>%
-    distinct(agency_id,
-             route_id,
-             direction_id,
-             trip_headsign,
-             Total_Trips,
-             Headway) ->
-    rt_df_out
-}
-
 #' 
 #' @param a mega-GTFSr dataframe filtered to AM peak commute period stops
 #' @param a mega-GTFSr dataframe filtered to PM peak commute period stops
@@ -305,95 +283,6 @@ join_all_gtfs_tables <- function(g) {
   return(df_sr)
 }
 
-######
-##Custom Time Format Functions
-######
-
-#' Make a dataframe GTFS arrival_time column into standard time variable
-#' @export
-#' @param dataframe containing a GTFS-style "arrival_time" column (time values at +24:00:00)
-#' @return dataframe containing a GTFS-style "arrival_time" column (no time values at +24:00:00)
-make_arrival_hour_less_than_24 <- function(df) {
-  t1 <- df$arrival_time
-  if (!(typeof(t1) == "character")) {
-    stop("column not a character string--may already be fixed")
-  }
-  df$arrival_time <- sapply(t1,FUN=fix_hour)
-  df$arrival_time <- as.POSIXct(df$arrival_time, format= "%H:%M:%S")
-  df
-}
-
-#' Format a time string in the expected format
-#' @param x a GTFS hour string with an hour greater than 24
-#' @param hour_replacement the hour to replace the >24 value with
-#' @export
-#' @return a string formatted hh:mm:ss 
-format_new_hour_string <- function(x,hour_replacement) {
-  xl <- length(unlist(strsplit(x,":")))
-  if (xl > 3){
-    stop("unexpected time string")
-  }
-  minute <- as.integer(unlist(strsplit(x,":"))[[2]])
-  second <- as.integer(unlist(strsplit(x,":"))[[3]])
-  x <- paste(c(hour_replacement,minute,second),collapse=":")
-  return(x)
-}
-
-#' Format GTFS Time strings as standard time string
-#' @param a GTFS Time string
-#' @export
-#' @return Time string with no hours greater than 24
-fix_hour <- function(x) {
-  # use:
-  #   t1 <- stop_times$arrival_time
-  #   stop_times$arrival_time <- sapply(t1,FUN=fix_hour)
-  if(!is.na(x)) {
-    hour <- as.integer(unlist(strsplit(x,":"))[[1]])
-    if(!is.na(hour) & hour > 23) {
-      hour <- hour-24
-      x <- format_new_hour_string(x, hour)
-      if (hour > 47){
-        stop("hour is greater than 47 in stop times")
-      }
-    }
-  }
-  x
-}
-
-######
-##Custom Bus Frequency Functions
-######
-
-#' Filter a mega-GTFSr dataframe to rows/stops that occur on all weekdays, are buses, and
-#' have a stop_time between 2 time periods
-#' @param a mega-GTFSr dataframe made with the join_all_gtfs_tables() function
-#' @param period - "AM" or "PM"
-#' @export
-#' @return a mega-GTFSr dataframe filtered to TPA peak periods and flagged as AM or PM peak
-flag_and_filter_peak_periods_by_time <- function(mega_df, period) {
-  if (period=="AM"){
-    time_start <- "06:00:00"
-    time_end <- "09:59:00"
-  } else {
-    time_start <- "15:00:00"
-    time_end <- "18:59:00"
-  }
-  
-  mega_df <- filter_by_time(mega_df,
-                            time_start,
-                            time_end)
-  
-  if (!(is.data.frame(mega_df) && nrow(mega_df)==0) && period=="AM"){
-    mega_df["Peak_Period"] <-"AM Peak"
-  } else if (!(is.data.frame(mega_df) && nrow(mega_df)==0) && period=="PM" ) {
-    mega_df["Peak_Period"] <-"PM Peak" 
-  } else
-  {
-    mega_df$Peak_Period <-  mega_df$route_id
-  }
-  return(mega_df)
-}
-
 #' Filter a mega-GTFSr dataframe to rows/stops that occur on all weekdays, are buses, and
 #' have a stop_time between 2 time periods
 #' @param a dataframe made by joining all the GTFS tables together
@@ -417,36 +306,6 @@ filter_by_time <- function(rt_df, start_filter,end_filter) {
   return(rt_df_out)
 }
 
-#' for a mega-GTFSr dataframe, remove rows with duplicate stop times 
-#' @param a dataframe of stops with a stop_times column 
-#' @export
-#' @return a dataframe of stops with a stop_times column in which there are no duplicate stop times for a given stop
-remove_duplicate_stops <- function(rt_df){
-  rt_df %>%
-    distinct(agency_id, route_id, direction_id,
-             trip_headsign, stop_id, stop_sequence, arrival_time, Peak_Period) %>%
-    arrange(agency_id, route_id, direction_id,
-            arrival_time,stop_sequence)->rt_df_out
-  return(rt_df_out)
-}
-
-#' for a mega-GTFSr dataframe, count the number of trips a bus takes through a given stop within a given time period
-#' @param a mega-GTFSr dataframe
-#' @export
-#' @return a dataframe of stops with a "Trips" variable representing the count trips taken through each stop for a route within a given time frame
-count_trips<- function(rt_df) {
-  rt_df_out <- rt_df %>%
-    group_by(agency_id,
-             route_id,
-             direction_id,
-             trip_headsign,
-             stop_id,
-             Peak_Period) %>%
-    count(stop_sequence) %>%
-    mutate(Headways = round(240/n,0))
-  colnames(rt_df_out)[colnames(rt_df_out)=="n"] <- "Trips"
-  return(rt_df_out)
-}
 
 #' for a mega-GTFSr dataframe, reduce it to just a listing of routes
 #' @param a mega-GTFSr dataframe
