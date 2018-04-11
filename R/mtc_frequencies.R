@@ -22,6 +22,19 @@ join_all_gtfs_tables <- function(g) {
   return(df_sr)
 }
 
+#' Get all times a bus stops during weekday service for any service id
+#' @param a dataframe made by joining all the GTFS tables together
+#' @return a mega-GTFSr dataframe filtered to weekday services
+all_weekday_bus_service <- function(gtfs_df) {
+  gtfs_df <- subset(gtfs_df, gtfs_df$monday == 1 & 
+                      gtfs_df$tuesday == 1 & 
+                      gtfs_df$wednesday == 1 & 
+                      gtfs_df$thursday == 1 & 
+                      gtfs_df$friday == 1 & 
+                      gtfs_df$route_type == 3)
+  return(gtfs_df)
+}
+
 ######
 ##Custom Time Format Functions
 ######
@@ -95,18 +108,14 @@ headways_by_trip <- function(rt_df,
                         time_start),collapse=" ")
   time_end <- paste(c(format(Sys.Date(), "%Y-%m-%d"),
                       time_end),collapse=" ")
-  rt_df_out <- subset(rt_df, rt_df$monday == 1
-                      & rt_df$tuesday == 1
-                      & rt_df$wednesday == 1
-                      & rt_df$thursday == 1
-                      & rt_df$friday == 1
-                      & rt_df$route_type == 3
-                      & rt_df$arrival_time > time_start
+  rt_df <- all_weekday_bus_service(rt_df)
+  rt_df_out <- subset(rt_df, 
+                      rt_df$arrival_time > time_start
                       & rt_df$arrival_time < time_end)
-  rt_df_out <- remove_duplicate_stops(rt_df_out) #todo: see https://github.com/BayAreaMetro/RegionalTransitDatabase/issues/31
   rt_df_out <- count_trips(rt_df_out)
   return(rt_df_out)
 }
+
 
 #' for a mega-GTFSr dataframe, remove rows with duplicate stop times 
 #' @param a dataframe of stops with a stop_times column 
@@ -131,7 +140,8 @@ count_trips<- function(rt_df) {
              route_id,
              direction_id,
              trip_headsign,
-             stop_id) %>%
+             stop_id,
+             service_id) %>%
     count(stop_sequence) %>%
     mutate(Headways = round(240/n,0))
   colnames(rt_df_out)[colnames(rt_df_out)=="n"] <- "Trips"
