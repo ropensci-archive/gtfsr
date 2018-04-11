@@ -1,9 +1,3 @@
-
-[![Build
-Status](http://travis-ci.org/ropensci/gtfsr.svg?branch=master)](http://travis-ci.org/ropensci/gtfsr)
-[![codecov.io](http://codecov.io/github/ropensci/gtfsr/coverage.svg?branch=master)](http://codecov.io/github/ropensci/gtfsr?branch=master)
-[![](http://badges.ropensci.org/55_status.svg)](https://github.com/ropensci/onboarding/issues/55)
-
 ## Description
 
 This is MTC's fork of the gtfsr package. Here we maintain functions to do things for MTC business that are probably not directly relevant to the gtfsr project.
