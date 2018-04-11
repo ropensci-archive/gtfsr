@@ -4,7 +4,7 @@
 .Ruserdata
 inst/doc
 .gitignore
-gtfsr-opensci.Rproj
+*.Rproj
 packrat/lib*/
 .Rprofile
 vignettes/*_cache/

@@ -1,3 +1,21 @@
+#' Get a dataframe with lubridate dates for the gtfs stop_times_df 
+#' 
+#' @param stop_times_df a gtfsr$stop_times_df dataframe
+#' @export
+#' @return an dataframe with arrival and departure time set to lubridate types
+#' @examples 
+#' stop_times_dt <- stop_times_df_as_dt(some_stops)
+#' #plot the histogram of departure times by hour
+#' hist(hour(stop_times_dt$departure_time))
+stop_times_df_as_dt <- function(stop_times_df) {
+  stop_times_dt <- stop_times_df %>% 
+    dplyr::mutate(
+      departure_time = lubridate::hms(departure_time),
+      arrival_time = lubridate::hms(arrival_time)
+    )
+  return(stop_times_dt)
+}
+
 #' Get a `sf` dataframe for gtfs routes 
 #' 
 #' @param gtfs_obj gtfsr object
