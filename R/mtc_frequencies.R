@@ -24,6 +24,7 @@ join_all_gtfs_tables <- function(g) {
 
 #' Get all times a bus stops during weekday service for any service id
 #' @param a dataframe made by joining all the GTFS tables together
+#' @export
 #' @return a mega-GTFSr dataframe filtered to weekday services
 all_weekday_bus_service <- function(gtfs_df) {
   gtfs_df <- subset(gtfs_df, gtfs_df$monday == 1 & 
@@ -100,22 +101,18 @@ fix_hour <- function(x) {
 #' @param an end time filter hh:mm:ss
 #' @export
 #' @return a mega-GTFSr dataframe filtered to rows of interest
-headways_by_trip <- function(rt_df, 
-                                   period_name="AM_Peak", 
+filter_by_time <- function(rt_df, 
                                    time_start="06:00:00", 
                                    time_end="09:59:00") {
   time_start <- paste(c(format(Sys.Date(), "%Y-%m-%d"),
                         time_start),collapse=" ")
   time_end <- paste(c(format(Sys.Date(), "%Y-%m-%d"),
                       time_end),collapse=" ")
-  rt_df <- all_weekday_bus_service(rt_df)
   rt_df_out <- subset(rt_df, 
                       rt_df$arrival_time > time_start
                       & rt_df$arrival_time < time_end)
-  rt_df_out <- count_trips(rt_df_out)
   return(rt_df_out)
 }
-
 
 #' for a mega-GTFSr dataframe, remove rows with duplicate stop times 
 #' @param a dataframe of stops with a stop_times column 
@@ -132,9 +129,10 @@ remove_duplicate_stops <- function(rt_df){
 
 #' for a mega-GTFSr dataframe, count the number of trips a bus takes through a given stop within a given time period
 #' @param a mega-GTFSr dataframe
+#' @param wide if true, then return a wide rather than tidy data frame
 #' @export
 #' @return a dataframe of stops with a "Trips" variable representing the count trips taken through each stop for a route within a given time frame
-count_trips<- function(rt_df) {
+count_departures <- function(rt_df, wide=FALSE) {
   rt_df_out <- rt_df %>%
     group_by(agency_id,
              route_id,
@@ -142,9 +140,15 @@ count_trips<- function(rt_df) {
              trip_headsign,
              stop_id,
              service_id) %>%
-    count(stop_sequence) %>%
-    mutate(Headways = round(240/n,0))
-  colnames(rt_df_out)[colnames(rt_df_out)=="n"] <- "Trips"
+    summarise(departures = n()) %>% 
+    as.data.frame() %>%
+    select(-trip_headsign)
+  if(wide==TRUE){
+    rt_df_out <- rt_df_out %>%
+      unite(service_and_direction, direction_id,service_id) %>%
+      tibble::rowid_to_column() %>%
+      spread(service_and_direction, departures, sep="_")
+  }
   return(rt_df_out)
 }
 
