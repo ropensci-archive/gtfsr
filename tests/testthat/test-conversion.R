@@ -27,3 +27,13 @@ test_that('Can convert a gtfsr routes dataframe to a simple features dataframe',
 test_that('Can convert a gtfsr stops dataframe to a simple features dataframe', {
   expect_is(stops_df_as_sf(gtfs_obj$stops_df), 'sf')
 })
+
+context('Converting GTFS stop times columns into lubridate columns')
+
+# stop_times_df_as_dt()
+test_that('Can convert a gtfsr stop_times dataframe to lubridate type', {
+  stop_times_df <- gtfs_obj$stop_times_df
+  stop_times_dt <- stop_times_df_as_dt(stop_times_df)
+  expect_is(stop_times_dt$departure_time, 'Period')
+})
+
