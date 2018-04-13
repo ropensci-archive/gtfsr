@@ -4,12 +4,14 @@
 \alias{count_departures}
 \title{for a mega-GTFSr dataframe, count the number of trips a bus takes through a given stop within a given time period}
 \usage{
-count_departures(rt_df, wide = FALSE)
+count_departures(rt_df, select_service_id, wide = FALSE)
 }
 \arguments{
 \item{wide}{if true, then return a wide rather than tidy data frame}
 
 \item{a}{mega-GTFSr dataframe}
+
+\item{service_id}{(optional) a service id to filter by}
 }
 \value{
 a dataframe of stops with a "Trips" variable representing the count trips taken through each stop for a route within a given time frame

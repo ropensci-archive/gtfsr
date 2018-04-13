@@ -25,105 +25,68 @@ If you’d like to build the accompanying vignette, then run
 
 ## Example Usage
 
-Calculate headways for one provider based on MTC/State of California "stop/route headway" standard. 
+Output bus stops for sb827 april amendments
 
 ```
 library(gtfsr)
 library(sf)
 library(dplyr)
-
-setwd("~/Documents/Projects/mtc/Data-And-Visualization-Projects/sb827")
-
-major_stops_url <- "https://opendata.arcgis.com/datasets/561dc5b42fa9451b95faf615a3054260_0.geojson"
-major_stops_sf <- st_read(major_stops_url)
-
-major_stops_df <- major_stops_sf[,c('agency_id','route_id')]
-st_geometry(major_stops_df) <- NULL
-
+library(lubridate)
 library(readr)
 
-#read 511 orgs list
 o511 <- read_csv("https://gist.githubusercontent.com/tibbl35/d49fa2c220733b0072fc7c59e0ac412b/raw/cff45d8c8dd2ea951b83c0be729abe72f35b13f7/511_orgs.csv")
 
-#filter for just those agencies that have high frequency stops (these are unlikely to have gtfs data that will fail in processing)
-agency_ids <- filter(o511, PrivateCode %in% major_stops_df$agency_id) %>% select(PrivateCode)
-agency_ids <- agency_ids[[1]]
-
-#Sys.setenv(APIKEY511 = "")
+#Sys.setenv(APIKEY511 = "YOURKEYHERE")
 api_key = Sys.getenv("APIKEY511")
 
-agency_id1 <- agency_ids[[1]] 
-zip_request_url = paste0('https://api.511.org/transit/datafeeds?api_key=',
-                         api_key,
-                         '&operator_id=',
-                         agency_id1)
+results <- apply(o511, 1, function(x) try(process_april_amendment1(x)))
+is.error <- function(x) inherits(x, "try-error")
+succeeded <- !vapply(results, is.error, logical(1))
+get.error.message <- function(x) {attr(x,"condition")$message}
+message <- vapply(results[!succeeded], get.error.message, "")
+df_stops <- do.call("rbind", results[succeeded])
+st_write(df_stops,"827_april_amendment1.csv", driver="CSV")
+st_write(df_stops,"827_april_amendment1.gpkg",driver="GPKG")
+st_write(df_stops,"827_april_amendment1.shp", driver="ESRI Shapefile")
 
-g1 <- zip_request_url %>% import_gtfs
+o511['processed1'] <- TRUE
+o511['succeeded1'] <- succeeded
+o511['error_message1'] <- ""
+o511[!succeeded,'error_message1'] <- message
+write_csv(o511,"gtfs_processing.csv")
 
-#cache the data
-save(g1, file=paste0(agency_id1,"_gtfsr.rda"))
+results <- apply(o511[1,], 1, function(x) try(process_april_amendment2(x)))
+is.error <- function(x) inherits(x, "try-error")
+is.sf_df <- function(x) inherits(x, "sf")
+succeeded <- !vapply(results, is.error, logical(1))
+get.error.message <- function(x) {attr(x,"condition")$message}
+message <- vapply(results[!succeeded], get.error.message, "")
+df_stops <- do.call("rbind", results[succeeded])
+st_write(df_stops,"827_april_amendment2.csv", driver="CSV")
+st_write(df_stops,"827_april_amendment2.gpkg",driver="GPKG")
+st_write(df_stops,"827_april_amendment2.shp", driver="ESRI Shapefile")
 
-df_sr <- join_all_gtfs_tables(g1)
-df_sr <- make_arrival_hour_less_than_24(df_sr)
+o511['processed2'] <- TRUE
+o511['succeeded2'] <- succeeded
+o511['error_message2'] <- ""
+o511[!succeeded,'error_message2'] <- message
 
-am_stops <- headways_by_trip(df_sr,
-                             time_start="06:00:00", 
-                             time_end="09:59:00")
-am_stops <- rename(am_stops,am_trips=Trips,am_headway=Headways)
+results <- apply(o511[1,], 1, function(x) try(process_april_amendment3(x)))
+is.error <- function(x) inherits(x, "try-error")
+is.sf_df <- function(x) inherits(x, "sf")
+succeeded <- !vapply(results, is.error, logical(1))
+get.error.message <- function(x) {attr(x,"condition")$message}
+message <- vapply(results[!succeeded], get.error.message, "")
+df_stops <- do.call("rbind", results[succeeded])
+st_write(df_stops,"827_april_amendment3.csv", driver="CSV")
+st_write(df_stops,"827_april_amendment3.gpkg",driver="GPKG")
+st_write(df_stops,"827_april_amendment3.shp", driver="ESRI Shapefile")
 
-pm_stops <- headways_by_trip(df_sr,
-                             time_start="15:00:00", 
-                             time_end="18:59:00")
-pm_stops <- rename(pm_stops,pm_trips=Trips,pm_headway=Headways)
-
-stops_trips_and_frequencies_am_or_pm <- full_join(am_stops,pm_stops, 
-                                                by=c("agency_id", 
-                                                    "route_id", 
-                                                    "direction_id", 
-                                                    "trip_headsign", 
-                                                    "stop_id", 
-                                                    "stop_sequence"))
-
-write_csv(stops_trips_and_frequencies_am_or_pm,
-          paste0("stops_trips_and_frequencies_am_or_pm",
-                 agency_id1,".csv"))
-
-st_write(df_sf,
-         paste0("stops_df_",agency_id1,".gpkg"), 
-         driver='GPKG')
-
-### Appendix
-
-#verification check on a single route outcome, from major stops opendata
-
-major_stops_for_agency <- major_stops_sf[major_stops_sf$agency_id==agency_id1,]
-
-major_stops_for_agency <- inner_join(major_stops_for_agency,stops_trips_and_frequencies)
-
-major_stops_for_agency$bus_headway <- as.integer(major_stops_for_agency$bus_headway)
-
-route_18_stop_ids <- df_sr[df_sr$route_id=="18",]$stop_id
-
-route_18_stops <- df_sf[df_sf$stop_id %in% route_18_stop_ids,]
-
-mapview(route_18_stops, 
-        col.regions="blue", alpha=0.8) + 
-  mapview(major_stops_for_agency[major_stops_for_agency$route_id=="18",], 
-          col.regions="green", alpha=0.8) 
-
-#conclusion: the R method used here necessitates the application 
-#of the stop average headway over the whole set of stops for the route after the fact
-#for agencies that do not provide interpolated stop times. 
-
-major_stops_for_agency <- major_stops_for_agency %>% 
-  filter(bus_peak_period=="PM Peak" && bus_headway <16) %>% 
-  mutate(headway_diff = pm_headway-bus_headway)
-
-hist(r1$headway_diff)
-
-#conclusion: looks like the methods here are providing different estimates for headway than
-#what is available on the major stops data
-#did a verification against published schedule for route 18 and the methods here were more accurate
-#more manual QA would be ideal
+#write processing records back out
+o511['processed3'] <- TRUE
+o511['succeeded3'] <- succeeded
+o511['error_message3'] <- ""
+o511[!succeeded,'error_message3'] <- message
+write_csv(o511,"gtfs_processing.csv")
 ```
 
