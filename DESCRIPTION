@@ -26,7 +26,7 @@ Imports:
     assertthat,
     leaflet,
     sp,
-    sf,
+    gtsf,
     scales,
     here
 Suggests:
