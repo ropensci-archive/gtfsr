@@ -16,6 +16,7 @@ an sf dataframe for gtfs routes with a point column
 Get a \code{sf} dataframe for gtfs stops
 }
 \examples{
+library(gtsf)
 some_stops <- gtfs_obj$stops_df[sample(nrow(gtfs_obj$stops_df), 40),]
 some_stops_sf <- stops_df_as_sf(some_stops)
 plot(some_stops_sf)
