@@ -27,6 +27,7 @@ Imports:
     leaflet,
     sp,
     sf,
+    gtsf,
     scales,
     here
 Suggests:
