@@ -54,3 +54,4 @@ trigger_suppressWarnings <- function(expr, quiet) {
 	if(!quiet) expr else suppressWarnings(expr)
 
 }
+

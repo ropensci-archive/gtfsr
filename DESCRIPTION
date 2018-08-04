@@ -1,20 +1,18 @@
-Package: gtfsr
+Package: trread
 Type: Package
-Title: Working with GTFS (General Transit Feed Specification) feeds in R
-Version: 1.0.3
-Authors@R: as.person(c(
-    "Elaine McVey <elaine.mcvey@transloc.com> [aut]",
-    "Danton Noriega-Goodwin <danton.noriega@gmail.com> [aut, cre]",
-    "Charles Hans Thompson <hans.thompson1@gmail.com> [ctb]",
-    "Michael Sumner [ctb]",
-    "Tom Buckley <buckley.tom@gmail.com> [ctb]"
-  ))
-Description: Provides API wrappers for popular public GTFS feed sharing sites, reads feed data into a gtfs data object, validates data quality, provides convenience functions for common tasks.
+Title: Transit File Reader 
+Version: 0.2.6
+Authors@R: c(
+    person("Tom", "Buckley", role = c("aut", "cre"), email = "tom@tbuckl.com"),
+    person("Danton", "Noriega-Goodwin", role = c("aut"), email = "danton.noriega@gmail.com"),
+    person("Elaine", "McVey", role = c("aut"), email = "elaine.mcvey@transloc.com"),
+    person("Charles Hans", "Thompson", role = c("ctb"), email = "hans.thompson1@gmail.com"),
+    person("Michael", "Sumner", role = c("ctb"))
+  )
+Description: Read General Transit Feed Specification (GTFS) zipfiles into a list of R dataframes. Perform validation of the data structure against the specification. Please see the GTFS documentation here for more detail: <http://gtfs.org/>.
 License: GPL
 LazyData: TRUE
 Depends: R (>= 3.2.4)
-Remotes: 
-    github::rstudio/leaflet
 Imports:
     dplyr,
     tibble,
@@ -24,9 +22,6 @@ Imports:
     magrittr,
     stringr,
     assertthat,
-    leaflet,
-    sp,
-    sf,
     scales,
     here
 Suggests:
@@ -34,7 +29,7 @@ Suggests:
     knitr,
     rmarkdown
 RoxygenNote: 6.0.1
-VignetteBuilder: knitr
-URL: http://ropensci.github.io/gtfsr, https://github.com/ropensci/gtfsr
-BugReports: https://github.com/ropensci/gtfsr/issues
+URL: https://github.com/r-gtfs/trread
+BugReports: https://github.com/r-gtfs/trread/issues
 Roxygen: list(markdown = TRUE)
+VignetteBuilder: knitr

@@ -9,7 +9,9 @@
 ^README\.Rmd$
 ^README-.*\.png$
 ^README.html
+^README.md
 ^packrat/
 ^CONDUCT\.md$
 ^docs$
 ^_pkgdown\.yml$
+^data-raw/
