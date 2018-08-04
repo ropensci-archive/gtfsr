@@ -12,6 +12,7 @@
 \item{loc_pid}{the id of the feed on transitfeeds.com}
 \item{loc_t}{the title of the location}
 \item{loc_n}{the shortname fo the location}
+\item{loc_lat}{the location latitude}
 \item{loc_lng}{the location longitude}
 \item{url_d}{GTFS feed url}
 \item{url_i}{the metadata url for the feed}
