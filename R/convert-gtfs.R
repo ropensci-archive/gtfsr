@@ -3,8 +3,8 @@
 #' @param gtfs_obj gtfsr object
 #' @export
 #' @return an sf dataframe for gtfs routes with a multilinestring column
-#' @examples 
-#' library(gtsf)
+#' @examples
+#' library(gtfsr)
 #' routes_sf <- routes_df_as_sf(gtfs_obj)
 #' plot(routes_sf[1,])
 routes_df_as_sf <- function(gtfs_obj) {
@@ -31,7 +31,7 @@ routes_df_as_sf <- function(gtfs_obj) {
 #' @export
 #' @return an sf dataframe for gtfs routes with a point column
 #' @examples 
-#' library(gtsf)
+#' library(gtfsr)
 #' some_stops <- gtfs_obj$stops_df[sample(nrow(gtfs_obj$stops_df), 40),]
 #' some_stops_sf <- stops_df_as_sf(some_stops)
 #' plot(some_stops_sf)
