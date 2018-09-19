@@ -27,7 +27,7 @@ Imports:
     leaflet,
     sp,
     sf,
-    gtsf,
+    tidytransit,
     scales,
     here
 Suggests:
