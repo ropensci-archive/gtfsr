@@ -1,3 +1,8 @@
+# NOTE:
+
+This package is no longer maintained. 
+
+Please consider using [tidytransit](https://github.com/r-transit/tidytransit). 
 
 [![Build
 Status](http://travis-ci.org/ropensci/gtfsr.svg?branch=master)](http://travis-ci.org/ropensci/gtfsr)
